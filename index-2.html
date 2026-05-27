@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="theme-color" content="#0a2e1a"/>
+<title>🎱 Wadau Pool Mini League</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --felt:#071f10;--felt2:#0a2e1a;
+  --neon:#00d4ff;--ndim:rgba(0,212,255,0.12);
+  --gold:#ffd700;--gdim:rgba(255,215,0,0.12);
+  --green:#00ff88;--red:#ff4d4d;--orange:#ff6b35;
+  --white:#f0f8ff;--muted:rgba(240,248,255,0.42);
+  --border:rgba(0,212,255,0.16);--glass:rgba(255,255,255,0.035);
+  --shadow:0 12px 40px rgba(0,0,0,0.55);
+  --r:14px;--rs:8px;
+  --fd:'Bebas Neue',sans-serif;
+  --fm:'Orbitron',monospace;
+  --fb:'Rajdhani',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--felt2);color:var(--white);font-family:var(--fb);overflow-x:hidden}
+
+/* ── BG ── */
+#bgCanvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+.bg-felt{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.03) 3px,rgba(0,0,0,0.03) 6px),
+  repeating-linear-gradient(90deg,transparent,transparent 3px,rgba(0,0,0,0.03) 3px,rgba(0,0,0,0.03) 6px)}
+.bg-glow{position:fixed;inset:0;z-index:2;pointer-events:none;
+  background:radial-gradient(ellipse 70% 40% at 50% 0%,rgba(0,212,255,0.07) 0%,transparent 65%),
+  radial-gradient(ellipse 50% 35% at 95% 95%,rgba(255,215,0,0.05) 0%,transparent 55%)}
+.pocket{position:fixed;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,0.65);
+  border:2px solid rgba(0,212,255,0.07);z-index:3;pointer-events:none}
+.ptl{top:12px;left:12px}.ptr{top:12px;right:12px}
+.pbl{bottom:12px;left:12px}.pbr{bottom:12px;right:12px}
+nav,.hero,.sec,.footer{position:relative;z-index:10}
+
+/* ── NAV ── */
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 22px;background:rgba(7,31,16,0.93);
+  backdrop-filter:blur(24px);border-bottom:1px solid var(--border)}
+.nav-logo{display:flex;align-items:center;gap:7px;font-family:var(--fm);font-size:.85rem;
+  color:var(--neon);letter-spacing:2px;text-decoration:none;text-shadow:0 0 10px rgba(0,212,255,0.45)}
+.nav-links{display:flex;gap:20px}
+.nav-links a{color:var(--muted);text-decoration:none;font-weight:600;font-size:.76rem;
+  letter-spacing:1.5px;text-transform:uppercase;transition:color .2s}
+.nav-links a:hover{color:var(--neon)}
+
+/* ── HERO ── */
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;
+  padding:108px 20px 68px;text-align:center;overflow:hidden;position:relative}
+.hero::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 65% 55% at 50% 45%,rgba(0,212,255,0.06) 0%,transparent 70%);pointer-events:none}
+.hero::after{content:'';position:absolute;top:70px;left:14px;right:14px;bottom:14px;
+  border:3px solid rgba(0,212,255,0.055);border-radius:22px;pointer-events:none}
+.hi{max-width:660px;width:100%;position:relative;z-index:1}
+.h-season{display:inline-block;padding:5px 17px;background:var(--ndim);border:1px solid var(--neon);
+  border-radius:100px;font-family:var(--fm);font-size:.63rem;color:var(--neon);
+  letter-spacing:3px;margin-bottom:20px;animation:badge-p 2.5s ease-in-out infinite}
+@keyframes badge-p{0%,100%{box-shadow:0 0 0 transparent}50%{box-shadow:0 0 14px rgba(0,212,255,0.3)}}
+.h-ball{font-size:3.6rem;display:block;margin-bottom:9px;
+  animation:ball-s 9s linear infinite;filter:drop-shadow(0 0 16px rgba(0,212,255,0.35))}
+@keyframes ball-s{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.h-t1{display:block;font-family:var(--fd);font-size:clamp(2.8rem,10vw,5.8rem);
+  letter-spacing:5px;color:var(--white)}
+.h-t2{display:block;font-family:var(--fd);font-size:clamp(2rem,7vw,4.2rem);
+  letter-spacing:6px;background:linear-gradient(90deg,var(--neon),var(--gold),var(--neon));
+  background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;animation:txt-s 3.5s linear infinite;margin-bottom:16px}
+@keyframes txt-s{from{background-position:0}to{background-position:200%}}
+.h-tag{font-size:clamp(.85rem,2.5vw,1rem);color:var(--muted);letter-spacing:1px;
+  margin-bottom:24px;font-style:italic}
+.restart-badge{display:inline-flex;align-items:center;gap:7px;padding:5px 15px;
+  margin-bottom:26px;background:rgba(255,107,53,0.1);border:1px solid rgba(255,107,53,0.3);
+  border-radius:100px;font-size:.74rem;letter-spacing:1px;color:var(--orange);font-weight:600}
+.h-counters{display:flex;align-items:center;justify-content:center;gap:14px;
+  margin-bottom:32px;flex-wrap:wrap}
+.hc{display:flex;flex-direction:column;align-items:center;min-width:70px}
+.hc-n{font-family:var(--fm);font-size:2rem;color:var(--gold);
+  text-shadow:0 0 16px rgba(255,215,0,0.4);line-height:1}
+.hc-l{font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.hc-sep{width:1px;height:36px;background:linear-gradient(to bottom,transparent,var(--border),transparent)}
+.view-btn{display:inline-flex;align-items:center;gap:10px;padding:13px 30px;
+  background:var(--ndim);border:1.5px solid var(--neon);border-radius:100px;
+  color:var(--neon);font-family:var(--fm);font-size:.83rem;letter-spacing:2px;
+  text-decoration:none;transition:all .3s;box-shadow:0 0 16px rgba(0,212,255,0.1)}
+.view-btn:hover{box-shadow:0 0 28px rgba(0,212,255,0.3);transform:translateY(-2px)}
+.vba{animation:ab 1.6s ease-in-out infinite}
+@keyframes ab{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
+.scroll-h{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);
+  font-size:.6rem;letter-spacing:3px;text-transform:uppercase;
+  color:rgba(240,248,255,0.2);animation:sh 2.2s ease-in-out infinite}
+@keyframes sh{0%,100%{opacity:.2;transform:translateX(-50%) translateY(0)}
+  50%{opacity:.5;transform:translateX(-50%) translateY(5px)}}
+.cue{position:absolute;height:5px;width:250px;
+  background:linear-gradient(90deg,rgba(200,158,28,.65),rgba(130,88,14,.35),transparent);
+  border-radius:3px;top:48%;opacity:.16;pointer-events:none}
+.cue-l{left:-65px;transform:rotate(28deg);animation:cl 9s ease-in-out infinite}
+.cue-r{right:-65px;transform:rotate(-28deg);animation:cr 9s ease-in-out infinite 1.2s}
+@keyframes cl{0%,100%{transform:rotate(28deg);opacity:.16}50%{transform:rotate(33deg);opacity:.26}}
+@keyframes cr{0%,100%{transform:rotate(-28deg);opacity:.16}50%{transform:rotate(-33deg);opacity:.26}}
+
+/* ── SECTIONS ── */
+.sec{padding:76px 20px;max-width:1040px;margin:0 auto}
+.sec-head{text-align:center;margin-bottom:42px}
+.sec-pill{display:inline-block;padding:4px 13px;background:var(--gdim);
+  border:1px solid rgba(255,215,0,0.26);border-radius:100px;font-family:var(--fm);
+  font-size:.61rem;color:var(--gold);letter-spacing:3px;margin-bottom:11px}
+.sec-title{font-family:var(--fd);font-size:clamp(1.9rem,5vw,2.8rem);
+  letter-spacing:4px;color:var(--white);margin-bottom:7px;
+  text-shadow:0 0 26px rgba(0,212,255,0.16)}
+.sec-sub{font-size:.8rem;color:var(--muted);letter-spacing:.7px}
+.divider{width:55px;height:2px;background:linear-gradient(90deg,transparent,var(--neon),transparent);margin:13px auto 0}
+
+/* ── HOW POINTS WORK BANNER ── */
+.pts-explainer{
+  background:linear-gradient(135deg,rgba(255,215,0,0.06),rgba(255,215,0,0.02));
+  border:1px solid rgba(255,215,0,0.25);border-radius:16px;
+  padding:18px 22px;margin-bottom:22px;
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+}
+.pe-icon{font-size:2rem;flex-shrink:0}
+.pe-text{flex:1;min-width:200px}
+.pe-title{font-family:var(--fm);font-size:.75rem;color:var(--gold);letter-spacing:2px;margin-bottom:5px}
+.pe-desc{font-size:.82rem;color:rgba(240,248,255,0.65);line-height:1.5}
+.pe-formula{
+  display:inline-block;padding:4px 12px;
+  background:rgba(255,215,0,0.12);border:1px solid rgba(255,215,0,0.3);
+  border-radius:8px;font-family:var(--fm);font-size:.78rem;color:var(--gold);
+  margin-top:8px;letter-spacing:1px;
+}
+
+/* ── COLUMN LEGEND ── */
+.col-legend{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:8px 20px;
+  background:rgba(0,212,255,0.03);border:1px solid rgba(0,212,255,0.12);
+  border-radius:12px;padding:14px 18px;margin-bottom:20px;
+}
+.cl-item{font-size:.75rem;color:var(--muted)}
+.cl-item b{color:var(--neon)}
+.cl-item.pts-col b{color:var(--gold)}
+.cl-item.loss-col b{color:var(--red)}
+
+/* ── STANDINGS TABLE ── */
+.tbl-card{background:var(--glass);backdrop-filter:blur(22px);
+  border:1px solid var(--border);border-radius:18px;overflow:hidden;
+  box-shadow:var(--shadow),0 0 20px rgba(0,212,255,0.08)}
+.stbl{width:100%;border-collapse:collapse}
+.stbl thead tr{background:rgba(0,212,255,0.05);border-bottom:1px solid var(--border)}
+.stbl th{padding:14px 11px;font-family:var(--fm);font-size:.58rem;letter-spacing:2px;
+  color:rgba(0,212,255,0.62);text-transform:uppercase;text-align:center}
+.stbl th:nth-child(2){text-align:left}
+.stbl tbody tr{border-bottom:1px solid rgba(255,255,255,0.038);transition:background .25s}
+.stbl tbody tr:last-child{border-bottom:none}
+.stbl tbody tr:hover{background:rgba(255,255,255,0.032)}
+.stbl tbody tr.p1{background:rgba(255,215,0,0.038);border-left:3px solid var(--gold)}
+.stbl tbody tr.p2{border-left:3px solid rgba(192,192,192,0.4)}
+.stbl tbody tr.p3{border-left:3px solid rgba(205,127,50,0.4)}
+.stbl td{padding:16px 11px;text-align:center;font-family:var(--fb);font-weight:600;font-size:.9rem}
+.stbl td:nth-child(2){text-align:left}
+.medal{display:inline-flex;align-items:center;justify-content:center;
+  width:30px;height:30px;border-radius:50%;font-size:.88rem}
+.m1{background:linear-gradient(135deg,#ffd700,#b8860b);box-shadow:0 0 10px rgba(255,215,0,0.4)}
+.m2{background:linear-gradient(135deg,#d0d0d0,#888)}
+.m3{background:linear-gradient(135deg,#cd7f32,#7b4013)}
+.nc{display:flex;align-items:center;gap:10px}
+.dot{width:34px;height:34px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--fd);font-size:1.1rem;color:#000}
+.pname{font-weight:700;font-size:.92rem;display:block}
+.prole{font-size:.62rem;letter-spacing:1px;color:var(--muted);text-transform:uppercase}
+.pts-val{font-family:var(--fm);font-size:.95rem;color:var(--gold);
+  text-shadow:0 0 8px rgba(255,215,0,0.35)}
+.wpct-wrap{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:65px}
+.wpct-num{font-family:var(--fm);font-size:.73rem}
+.wpct-bar{width:52px;height:3px;background:rgba(255,255,255,0.07);border-radius:2px;overflow:hidden}
+.wpct-fill{height:100%;border-radius:2px;transition:width 1.4s ease;width:0}
+
+/* ── MATCH RESULTS ── */
+.results-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.rcard{background:var(--glass);backdrop-filter:blur(18px);
+  border:1px solid rgba(255,255,255,0.06);border-radius:var(--r);
+  padding:20px 14px;position:relative;overflow:hidden;
+  transition:transform .3s,box-shadow .3s;text-align:center}
+.rcard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--neon),transparent);opacity:.35}
+.rcard:hover{transform:translateY(-5px);box-shadow:var(--shadow),0 0 18px rgba(0,212,255,0.08)}
+.rc-tag{display:inline-block;padding:3px 10px;background:var(--ndim);
+  border:1px solid rgba(0,212,255,0.22);border-radius:100px;font-family:var(--fm);
+  font-size:.56rem;color:var(--neon);letter-spacing:2px;margin-bottom:14px}
+.rc-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px}
+.rc-pl{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:56px}
+.rc-av{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:var(--fd);font-size:1.35rem;color:#000;flex-shrink:0}
+.rc-nm{font-weight:700;font-size:.8rem}
+.rc-pl.win .rc-nm{color:var(--white)}
+.rc-pl.lose .rc-nm{color:var(--muted)}.rc-pl.lose .rc-av{opacity:.5}
+.rc-sc{display:flex;flex-direction:column;align-items:center;gap:2px}
+.rc-nums{display:flex;align-items:center;gap:6px;font-family:var(--fm)}
+.sc-w{font-size:1.9rem;color:var(--gold);text-shadow:0 0 10px rgba(255,215,0,0.5)}
+.sc-sep{font-size:1.1rem;color:rgba(255,255,255,0.18)}
+.sc-l{font-size:1.9rem;color:rgba(255,255,255,0.28)}
+.rc-ft{font-size:.6rem;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase}
+.rc-win{display:inline-flex;align-items:center;gap:5px;margin-top:12px;padding:5px 13px;
+  background:rgba(0,255,136,0.07);border:1px solid rgba(0,255,136,0.2);
+  border-radius:100px;font-family:var(--fm);font-size:.58rem;letter-spacing:1.5px;color:var(--green)}
+
+/* ── PLAYER CARDS ── */
+.pcards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.pcard{background:var(--glass);backdrop-filter:blur(20px);border:1px solid var(--border);
+  border-radius:18px;padding:26px 18px;text-align:center;position:relative;overflow:hidden;
+  transition:transform .3s,box-shadow .3s}
+.pcard::before{content:'';position:absolute;top:-40%;left:50%;transform:translateX(-50%);
+  width:180%;height:180%;
+  background:radial-gradient(circle,var(--pcg,rgba(0,212,255,0.05)) 0%,transparent 60%);
+  pointer-events:none}
+.pcard.gold{border-color:rgba(255,215,0,0.32);box-shadow:0 0 26px rgba(255,215,0,0.09);--pcg:rgba(255,215,0,0.05)}
+.pcard.silver{border-color:rgba(192,192,192,0.2)}
+.pcard.bronze{border-color:rgba(205,127,50,0.2)}
+.pcard:hover{transform:translateY(-6px)}
+.pc-badge{position:absolute;top:14px;right:14px;width:25px;height:25px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:.63rem;font-family:var(--fm)}
+.pc-av{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:var(--fd);font-size:1.8rem;color:#000;margin:0 auto 13px;
+  border:2px solid rgba(255,255,255,0.16);position:relative}
+.pc-crown{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:1.1rem;
+  animation:crown-b 2.2s ease-in-out infinite}
+@keyframes crown-b{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-4px)}}
+.pc-name{font-family:var(--fd);font-size:1.5rem;letter-spacing:3px;margin-bottom:3px}
+.pc-role{font-size:.63rem;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:2px}
+.pc-rank{font-size:.67rem;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:13px}
+.pc-pts{display:inline-flex;align-items:center;gap:5px;padding:5px 15px;margin-bottom:15px;
+  background:var(--gdim);border:1px solid rgba(255,215,0,0.26);border-radius:100px}
+.pc-pts-n{font-family:var(--fm);font-size:1.35rem;color:var(--gold);
+  text-shadow:0 0 16px rgba(255,215,0,0.4)}
+.pc-pts-l{font-size:.6rem;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
+/* 2×2 stat grid */
+.pc-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px}
+.pcs{background:rgba(255,255,255,0.028);border:1px solid rgba(255,255,255,0.05);
+  border-radius:var(--rs);padding:9px 5px}
+.pcs-n{font-family:var(--fm);font-size:.95rem;display:block;line-height:1}
+.pcs-l{font-size:.58rem;letter-spacing:1px;color:var(--muted);text-transform:uppercase;
+  display:block;margin-top:3px}
+.pc-bar{display:flex;align-items:center;gap:7px;margin-bottom:9px}
+.pb-lbl{font-size:.58rem;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;white-space:nowrap}
+.pb-track{flex:1;height:5px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden}
+.pb-fill{height:100%;border-radius:3px;transition:width 1.5s ease;width:0}
+.pb-pct{font-family:var(--fm);font-size:.76rem;white-space:nowrap}
+.pc-chips{display:flex;justify-content:center;gap:5px}
+.chip{padding:3px 10px;border-radius:100px;font-family:var(--fm);font-size:.63rem;letter-spacing:.5px}
+.cw{background:rgba(0,255,136,0.09);border:1px solid rgba(0,255,136,0.2);color:var(--green)}
+.cl{background:rgba(255,77,77,0.09);border:1px solid rgba(255,77,77,0.2);color:var(--red)}
+
+/* ── CHARTS ── */
+.ch2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.ch3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.cbox{background:var(--glass);backdrop-filter:blur(18px);border:1px solid var(--border);
+  border-radius:var(--r);padding:18px;transition:transform .3s}
+.cbox:hover{transform:translateY(-3px)}
+.clbl{font-family:var(--fm);font-size:.65rem;letter-spacing:2px;color:var(--gold);
+  text-transform:uppercase;margin-bottom:14px;text-align:center}
+.ci{max-height:195px}
+/* Stat strip */
+.cstrip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}
+.cstr{background:var(--glass);backdrop-filter:blur(18px);border:1px solid var(--border);
+  border-radius:var(--r);padding:18px 12px;text-align:center;transition:transform .3s}
+.cstr:hover{transform:translateY(-3px)}
+.cstr-icon{display:block;font-size:1.6rem;margin-bottom:6px}
+.cstr-n{display:block;font-family:var(--fm);font-size:1.75rem;color:var(--gold);
+  text-shadow:0 0 14px rgba(255,215,0,0.35);margin-bottom:4px;line-height:1}
+.cstr-l{font-size:.63rem;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
+
+/* ── FOOTER ── */
+.footer{border-top:1px solid var(--border);padding:40px 20px;text-align:center;
+  background:rgba(0,0,0,0.16);position:relative;z-index:10}
+.fb{font-size:2rem;display:block;margin-bottom:9px;animation:ball-s 12s linear infinite}
+.fm{font-size:.92rem;color:rgba(240,248,255,0.62);margin-bottom:4px}
+.fm strong{color:var(--neon)}
+.fs{font-size:.72rem;color:rgba(240,248,255,0.24);letter-spacing:1px}
+.fi{display:flex;justify-content:center;gap:9px;margin-top:15px;font-size:1.1rem}
+
+/* ── CONFETTI ── */
+#cf{position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden}
+.cfp{position:absolute;top:-15px;border-radius:2px;animation:cf-f linear forwards}
+@keyframes cf-f{0%{transform:translateY(-15px) rotate(0);opacity:1}100%{transform:translateY(110vh) rotate(700deg);opacity:0}}
+
+/* ── REVEAL ── */
+.rv{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
+.rv.in{opacity:1;transform:translateY(0)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:680px){
+  .nav-links{display:none}
+  .sec{padding:56px 14px}
+  .results-grid,.pcards,.ch2,.ch3{grid-template-columns:1fr}
+  .cstrip{grid-template-columns:1fr 1fr}
+  .col-legend{grid-template-columns:1fr 1fr}
+  .stbl th,.stbl td{padding:11px 7px;font-size:.76rem}
+  .cue{display:none}.pocket{display:none}
+}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:rgba(0,212,255,0.22);border-radius:2px}
+::selection{background:rgba(0,212,255,0.16)}
+</style>
+</head>
+<body>
+<canvas id="bgCanvas"></canvas>
+<div class="bg-felt"></div><div class="bg-glow"></div>
+<div class="pocket ptl"></div><div class="pocket ptr"></div>
+<div class="pocket pbl"></div><div class="pocket pbr"></div>
+
+<!-- NAV -->
+<nav class="nav">
+  <a href="#top" class="nav-logo"><span>🎱</span> WADAU LEAGUE</a>
+  <div class="nav-links">
+    <a href="#standings">Standings</a>
+    <a href="#results">Results</a>
+    <a href="#players">Players</a>
+    <a href="#stats">Stats</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="top">
+  <div class="hi">
+    <div class="h-season">🎱 SEASON 02 · RESTARTED</div>
+    <h1>
+      <span class="h-ball">🎱</span>
+      <span class="h-t1">WADAU POOL</span>
+      <span class="h-t2">MINI LEAGUE</span>
+    </h1>
+    <p class="h-tag">1 Month Battle of Precision, Skill &amp; Bragging Rights</p>
+    <div class="restart-badge">🔄 League restarted today — fresh scores, fresh battles</div>
+    <div class="h-counters">
+      <div class="hc"><span class="hc-n">3</span><span class="hc-l">Players</span></div>
+      <div class="hc-sep"></div>
+      <div class="hc"><span class="hc-n" id="hcF">29</span><span class="hc-l">Frames Today</span></div>
+      <div class="hc-sep"></div>
+      <div class="hc"><span class="hc-n" id="hcP">45</span><span class="hc-l">Kim's Points</span></div>
+      <div class="hc-sep"></div>
+      <div class="hc"><span class="hc-n">3</span><span class="hc-l">Matches</span></div>
+    </div>
+    <a href="#standings" class="view-btn">🏆 View Standings <span class="vba">↓</span></a>
+    <div class="cue cue-l"></div><div class="cue cue-r"></div>
+  </div>
+  <div class="scroll-h">scroll down</div>
+</section>
+
+<!-- STANDINGS -->
+<section class="sec" id="standings">
+  <div class="sec-head">
+    <div class="sec-pill">LEADERBOARD</div>
+    <h2 class="sec-title">🏆 League Standings</h2>
+    <p class="sec-sub">Points = 3 × every frame/game won &nbsp;·&nbsp; Win% used as tiebreaker</p>
+    <div class="divider"></div>
+  </div>
+
+  <!-- HOW POINTS WORK -->
+  <div class="pts-explainer">
+    <div class="pe-icon">⚽</div>
+    <div class="pe-text">
+      <div class="pe-title">HOW POINTS ARE CALCULATED</div>
+      <div class="pe-desc">
+        Just like in football — every <strong>individual frame (game)</strong> you win earns you <strong>3 points</strong>.
+        So Kim winning 15 frames today = <strong>45 points</strong>. Henry and Simon both won 7 frames = <strong>21 points each</strong>.
+        When points are tied, the player with the better <strong>frame win%</strong> ranks higher.
+      </div>
+      <div class="pe-formula">Pts = Wins × 3</div>
+    </div>
+  </div>
+
+  <!-- COLUMN GUIDE -->
+  <div class="col-legend">
+    <div class="cl-item"><b>P</b> — Frames Played today</div>
+    <div class="cl-item"><b>W</b> — Frames / Games Won</div>
+    <div class="cl-item loss-col"><b style="color:var(--red)">L</b> — Frames / Games Lost</div>
+    <div class="cl-item"><b>Win%</b> — W ÷ P × 100</div>
+    <div class="cl-item pts-col"><b>Pts</b> — W × 3 (like football)</div>
+    <div class="cl-item" style="color:rgba(0,212,255,0.5);font-style:italic">Tiebreaker → Win%</div>
+  </div>
+
+  <div class="tbl-card rv">
+    <table class="stbl">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Player</th>
+          <th title="Frames Played">P</th>
+          <th title="Frames Won">W</th>
+          <th title="Frames Lost">L</th>
+          <th title="Frame Win %">Win%</th>
+          <th title="Points = W × 3">Pts<br><small style="font-size:.45rem;opacity:.55;letter-spacing:0">(W×3)</small></th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <!-- 1st: KIM -->
+        <tr class="p1">
+          <td><span class="medal m1">🥇</span></td>
+          <td>
+            <div class="nc">
+              <div class="dot" style="background:#ffd700;box-shadow:0 0 10px rgba(255,215,0,0.4)">K</div>
+              <div><span class="pname">Kim</span><span class="prole">The Sharp Shooter</span></div>
+            </div>
+          </td>
+          <td>22</td>
+          <td style="color:var(--green);font-weight:700;font-size:1rem">15</td>
+          <td style="color:var(--red);font-weight:700">7</td>
+          <td>
+            <div class="wpct-wrap">
+              <span class="wpct-num" style="color:#ffd700">68.2%</span>
+              <div class="wpct-bar">
+                <div class="wpct-fill" data-w="68.2" style="background:linear-gradient(90deg,#ffd700,rgba(255,215,0,0.3))"></div>
+              </div>
+            </div>
+          </td>
+          <td class="pts-val" style="font-size:1.1rem">45</td>
+        </tr>
+
+        <!-- 2nd: HENRY -->
+        <tr class="p2">
+          <td><span class="medal m2">🥈</span></td>
+          <td>
+            <div class="nc">
+              <div class="dot" style="background:#00d4ff;box-shadow:0 0 10px rgba(0,212,255,0.35)">H</div>
+              <div><span class="pname">Henry</span><span class="prole">The Comeback Kid</span></div>
+            </div>
+          </td>
+          <td>17</td>
+          <td style="color:var(--green);font-weight:700;font-size:1rem">7</td>
+          <td style="color:var(--red);font-weight:700">10</td>
+          <td>
+            <div class="wpct-wrap">
+              <span class="wpct-num" style="color:#00d4ff">41.2%</span>
+              <div class="wpct-bar">
+                <div class="wpct-fill" data-w="41.2" style="background:linear-gradient(90deg,#00d4ff,rgba(0,212,255,0.25))"></div>
+              </div>
+            </div>
+          </td>
+          <td class="pts-val">21</td>
+        </tr>
+
+        <!-- 3rd: SIMON -->
+        <tr class="p3">
+          <td><span class="medal m3">🥉</span></td>
+          <td>
+            <div class="nc">
+              <div class="dot" style="background:#ff6b35;box-shadow:0 0 10px rgba(255,107,53,0.35)">S</div>
+              <div><span class="pname">Simon</span><span class="prole">The Cue Master</span></div>
+            </div>
+          </td>
+          <td>19</td>
+          <td style="color:var(--green);font-weight:700;font-size:1rem">7</td>
+          <td style="color:var(--red);font-weight:700">12</td>
+          <td>
+            <div class="wpct-wrap">
+              <span class="wpct-num" style="color:#ff6b35">36.8%</span>
+              <div class="wpct-bar">
+                <div class="wpct-fill" data-w="36.8" style="background:linear-gradient(90deg,#ff6b35,rgba(255,107,53,0.25))"></div>
+              </div>
+            </div>
+          </td>
+          <td class="pts-val">21</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+  <p style="text-align:center;margin-top:13px;font-size:.73rem;color:rgba(0,212,255,0.45);font-style:italic">
+    🎱 Henry &amp; Simon both on 21 pts — Henry is 2nd by better win% (41.2% vs 36.8%)
+  </p>
+</section>
+
+<!-- MATCH RESULTS -->
+<section class="sec" id="results">
+  <div class="sec-head">
+    <div class="sec-pill">RESULTS</div>
+    <h2 class="sec-title">🎱 Match Results</h2>
+    <p class="sec-sub">Each number = frames won by that player in the match</p>
+    <div class="divider"></div>
+  </div>
+
+  <div class="results-grid">
+    <!-- Match 1 -->
+    <div class="rcard rv">
+      <div class="rc-tag">MATCH 1</div>
+      <div class="rc-row">
+        <div class="rc-pl win">
+          <div class="rc-av" style="background:#00d4ff;box-shadow:0 0 13px rgba(0,212,255,0.4)">H</div>
+          <span class="rc-nm">Henry</span>
+        </div>
+        <div class="rc-sc">
+          <div class="rc-nums"><span class="sc-w">4</span><span class="sc-sep">–</span><span class="sc-l">3</span></div>
+          <div class="rc-ft">7 frames played</div>
+        </div>
+        <div class="rc-pl lose">
+          <div class="rc-av" style="background:#ff6b35;box-shadow:0 0 13px rgba(255,107,53,0.4)">S</div>
+          <span class="rc-nm">Simon</span>
+        </div>
+      </div>
+      <div class="rc-win">🏆 Henry wins · tight match!</div>
+    </div>
+
+    <!-- Match 2 -->
+    <div class="rcard rv">
+      <div class="rc-tag">MATCH 2</div>
+      <div class="rc-row">
+        <div class="rc-pl win">
+          <div class="rc-av" style="background:#ffd700;box-shadow:0 0 13px rgba(255,215,0,0.45)">K</div>
+          <span class="rc-nm">Kim</span>
+        </div>
+        <div class="rc-sc">
+          <div class="rc-nums"><span class="sc-w">7</span><span class="sc-sep">–</span><span class="sc-l">3</span></div>
+          <div class="rc-ft">10 frames played</div>
+        </div>
+        <div class="rc-pl lose">
+          <div class="rc-av" style="background:#00d4ff;box-shadow:0 0 13px rgba(0,212,255,0.4)">H</div>
+          <span class="rc-nm">Henry</span>
+        </div>
+      </div>
+      <div class="rc-win">🏆 Kim wins · dominant!</div>
+    </div>
+
+    <!-- Match 3 -->
+    <div class="rcard rv">
+      <div class="rc-tag">MATCH 3</div>
+      <div class="rc-row">
+        <div class="rc-pl win">
+          <div class="rc-av" style="background:#ffd700;box-shadow:0 0 13px rgba(255,215,0,0.45)">K</div>
+          <span class="rc-nm">Kim</span>
+        </div>
+        <div class="rc-sc">
+          <div class="rc-nums"><span class="sc-w">8</span><span class="sc-sep">–</span><span class="sc-l">4</span></div>
+          <div class="rc-ft">12 frames played</div>
+        </div>
+        <div class="rc-pl lose">
+          <div class="rc-av" style="background:#ff6b35;box-shadow:0 0 13px rgba(255,107,53,0.4)">S</div>
+          <span class="rc-nm">Simon</span>
+        </div>
+      </div>
+      <div class="rc-win">🏆 Kim wins · commanding!</div>
+    </div>
+  </div>
+
+  <div style="margin-top:18px;padding:13px 18px;background:rgba(255,215,0,0.04);
+    border:1px solid rgba(255,215,0,0.14);border-radius:11px;text-align:center;
+    font-size:.79rem;color:rgba(255,215,0,0.6);letter-spacing:.4px">
+    💡 Kim's 15 wins = 7 (vs Henry) + 8 (vs Simon) = <strong style="color:var(--gold)">45 pts</strong>.
+    Henry's 7 wins = 4 (vs Simon) + 3 (vs Kim) = <strong style="color:var(--gold)">21 pts</strong>.
+    Simon's 7 wins = 3 (vs Henry) + 4 (vs Kim) = <strong style="color:var(--gold)">21 pts</strong>.
+  </div>
+</section>
+
+<!-- PLAYER CARDS -->
+<section class="sec" id="players">
+  <div class="sec-head">
+    <div class="sec-pill">ROSTER</div>
+    <h2 class="sec-title">👥 Player Profiles</h2>
+    <div class="divider"></div>
+  </div>
+  <div class="pcards">
+
+    <!-- KIM -->
+    <div class="pcard gold rv">
+      <div class="pc-badge" style="background:linear-gradient(135deg,#ffd700,#b8860b);color:#000">1</div>
+      <div class="pc-av" style="background:#ffd700;box-shadow:0 0 20px rgba(255,215,0,0.5)">
+        <span class="pc-crown">👑</span>K
+      </div>
+      <div class="pc-name">Kim</div>
+      <div class="pc-role">The Sharp Shooter</div>
+      <div class="pc-rank">🥇 League Leader</div>
+      <div class="pc-pts"><span class="pc-pts-n">45</span><span class="pc-pts-l">Points</span></div>
+      <div class="pc-grid">
+        <div class="pcs"><span class="pcs-n" style="color:var(--neon)">22</span><span class="pcs-l">Frames Played</span></div>
+        <div class="pcs"><span class="pcs-n" style="color:var(--green)">15</span><span class="pcs-l">Frames Won</span></div>
+        <div class="pcs"><span class="pcs-n" style="color:var(--red)">7</span><span class="pcs-l">Frames Lost</span></div>
+        <div class="pcs"><span class="pcs-n" style="color:var(--gold)">45</span><span class="pcs-l">Pts (15×3)</span></div>
+      </div>
+      <div class="pc-bar">
+        <span class="pb-lbl">Win%</span>
+        <div class="pb-track"><div class="pb-fill" data-w="68.2" style="background:linear-gradient(90deg,#ffd700,rgba(255,215,0,0.3))"></div></div>
+        <span class="pb-pct" style="color:#ffd700">68.2%</span>
+      </div>
+      <div class="pc-chips"><span class="chip cw">15 WINS</span><span class="chip cl">7 LOSSES</span></div>
+    </div>
+
+    <!-- HENRY -->
+    <div class="pcard silver rv">
+      <div class="pc-badge" style="background:linear-gradient(135deg,#d0d0d0,#888);color:#000">2</div>
+      <div class="pc-av" style="background:#00d4ff;box-shadow:0 0 20px rgba(0,212,255,0.5)">H</div>
+      <div class="pc-name">Henry</div>
+      <div class="pc-role">The Comeback Kid</div>
+      <div class="pc-rank">🥈 Runner Up</div>
+      <div class="pc-pts"><span class="pc-pts-n">21</span><span class="pc-pts-l">Points</span></div>
+      <div class="pc-grid">
+        <div class="pcs"><span class="pcs-n" style="color:var(--neon)">17</span><span class="pcs-l">Frames Played</span></div>
+        <div class="pcs"><span class="pcs-n" style="color:var(--green)">7</span><span class="pcs-l">Frames Won</span></div>
+        <div class="pcs"><span class="pcs-n" style="color:var(--red)">10</span><span class="pcs-l">Frames Lost</span></div>
+        <div class="pcs"><span class="pcs-n" style="color:var(--gold)">21</span><span class="pcs-l">Pts (7×3)</span></div>
+      </div>
+      <div class="pc-bar">
+        <span class="pb-lbl">Win%</span>
+        <div class="pb-track"><div class="pb-fill" data-w="41.2" style="background:linear-gradient(90deg,#00d4ff,rgba(0,212,255,0.25))"></div></div>
+        <span class="pb-pct" style="color:#00d4ff">41.2%</span>
+      </div>
+      <div class="pc-chips"><span class="chip cw">7 WINS</span><span class="chip cl">10 LOSSES</span></div>
+    </div>
+
+    <!-- SIMON -->
+    <div class="pcard bronze rv">
+      <div class="pc-badge" style="background:linear-gradient(135deg,#cd7f32,#7b4013);color:#fff">3</div>
+      <div class="pc-av" style="background:#ff6b35;box-shadow:0 0 20px rgba(255,107,53,0.5)">S</div>
+      <div class="pc-name">Simon</div>
+      <div class="pc-role">The Cue Master</div>
+      <div class="pc-rank">🥉 Third Place</div>
+      <div class="pc-pts"><span class="pc-pts-n">21</span><span class="pc-pts-l">Points</span></div>
+      <div class="pc-grid">
+        <div class="pcs"><span class="pcs-n" style="color:var(--neon)">19</span><span class="pcs-l">Frames Played</span></div>
+        <div class="pcs"><span class="pcs-n" style="color:var(--green)">7</span><span class="pcs-l">Frames Won</span></div>
+        <div class="pcs"><span class="pcs-n" style="color:var(--red)">12</span><span class="pcs-l">Frames Lost</span></div>
+        <div class="pcs"><span class="pcs-n" style="color:var(--gold)">21</span><span class="pcs-l">Pts (7×3)</span></div>
+      </div>
+      <div class="pc-bar">
+        <span class="pb-lbl">Win%</span>
+        <div class="pb-track"><div class="pb-fill" data-w="36.8" style="background:linear-gradient(90deg,#ff6b35,rgba(255,107,53,0.25))"></div></div>
+        <span class="pb-pct" style="color:#ff6b35">36.8%</span>
+      </div>
+      <div class="pc-chips"><span class="chip cw">7 WINS</span><span class="chip cl">12 LOSSES</span></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- STATS / CHARTS -->
+<section class="sec" id="stats">
+  <div class="sec-head">
+    <div class="sec-pill">ANALYTICS</div>
+    <h2 class="sec-title">📊 Performance Stats</h2>
+    <div class="divider"></div>
+  </div>
+
+  <div class="ch2">
+    <div class="cbox rv"><div class="clbl">Points (W × 3)</div><div class="ci"><canvas id="cPts"></canvas></div></div>
+    <div class="cbox rv"><div class="clbl">Frame Win %</div><div class="ci"><canvas id="cWpct"></canvas></div></div>
+  </div>
+  <div class="ch3">
+    <div class="cbox rv"><div class="clbl">Frames Won vs Lost</div><div class="ci"><canvas id="cWL"></canvas></div></div>
+    <div class="cbox rv"><div class="clbl">Frames Played Today</div><div class="ci"><canvas id="cPlayed"></canvas></div></div>
+    <div class="cbox rv"><div class="clbl">Points Share</div><div class="ci"><canvas id="cShare"></canvas></div></div>
+  </div>
+
+  <div class="cstrip">
+    <div class="cstr rv"><span class="cstr-icon">🎱</span><span class="cstr-n" id="ct1">0</span><span class="cstr-l">Frames Today</span></div>
+    <div class="cstr rv"><span class="cstr-icon">👑</span><span class="cstr-n" id="ct2">0</span><span class="cstr-l">Kim's Points</span></div>
+    <div class="cstr rv"><span class="cstr-icon">🎯</span><span class="cstr-n" id="ct3">0</span><span class="cstr-l">Total Points Scored</span></div>
+    <div class="cstr rv"><span class="cstr-icon">💥</span><span class="cstr-n" id="ct4">0</span><span class="cstr-l">Biggest Win Margin</span></div>
+  </div>
+</section>
+
+<footer class="footer">
+  <span class="fb">🎱</span>
+  <p class="fm">Built for the <strong>Wadau</strong> 🎱</p>
+  <p class="fs">Season 02 · Restarted · 3 Players · 3 Matches · 29 Frames · 87 Total Points</p>
+  <div class="fi"><span>🎱</span><span>🎯</span><span>🏆</span><span>🥇</span><span>🎱</span></div>
+</footer>
+<div id="cf"></div>
+
+<script>
+/* ── CANVAS BG ── */
+(function(){
+  const c=document.getElementById('bgCanvas'),ctx=c.getContext('2d');
+  function rs(){c.width=window.innerWidth;c.height=window.innerHeight;}
+  rs();window.addEventListener('resize',rs);
+  const BC=['#f5de0a','#1a52c8','#e8201e','#6a1a9a','#f07010','#1a6a1a','#8a1a1a','#111','#00d4ff','#ffd700'];
+  const balls=Array.from({length:12},(_,i)=>({
+    x:Math.random()*1200,y:Math.random()*800,r:12+Math.random()*10,
+    vx:(Math.random()-.5)*.38,vy:(Math.random()-.5)*.38,
+    color:BC[i%BC.length],alpha:.07+Math.random()*.06,
+    rot:Math.random()*Math.PI*2,rv:(Math.random()-.5)*.01,
+    stripe:i>5,num:(i%10)+1
+  }));
+  const cues=Array.from({length:3},()=>({
+    x:Math.random()*1200,y:Math.random()*800,
+    angle:Math.random()*Math.PI*2,spd:(Math.random()-.5)*.0026,
+    alpha:.028+Math.random()*.028,len:145+Math.random()*90
+  }));
+  function lx(hex,a){const n=parseInt(hex.replace('#',''),16);return`rgb(${Math.min(255,(n>>16)+a)},${Math.min(255,((n>>8)&0xff)+a)},${Math.min(255,(n&0xff)+a)})`;}
+  function db(b){
+    ctx.save();ctx.globalAlpha=b.alpha;ctx.translate(b.x,b.y);ctx.rotate(b.rot);
+    const g=ctx.createRadialGradient(-b.r*.32,-b.r*.32,b.r*.08,0,0,b.r);
+    g.addColorStop(0,lx(b.color,55));g.addColorStop(1,b.color);
+    ctx.beginPath();ctx.arc(0,0,b.r,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+    if(b.stripe){ctx.save();ctx.clip();ctx.fillStyle='rgba(255,255,255,0.5)';ctx.fillRect(-b.r,-b.r*.32,b.r*2,b.r*.64);ctx.restore();}
+    ctx.beginPath();ctx.arc(0,0,b.r*.4,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.87)';ctx.fill();
+    ctx.fillStyle='#000';ctx.font=`bold ${b.r*.44}px Rajdhani`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(b.num,0,0);
+    ctx.restore();
+  }
+  function tick(){
+    ctx.clearRect(0,0,c.width,c.height);
+    cues.forEach(cu=>{
+      cu.angle+=cu.spd;
+      const x2=cu.x+Math.cos(cu.angle)*cu.len,y2=cu.y+Math.sin(cu.angle)*cu.len;
+      const g=ctx.createLinearGradient(cu.x,cu.y,x2,y2);
+      g.addColorStop(0,`rgba(198,155,26,${cu.alpha})`);g.addColorStop(.6,`rgba(128,85,12,${cu.alpha*.4})`);g.addColorStop(1,'transparent');
+      ctx.beginPath();ctx.moveTo(cu.x,cu.y);ctx.lineTo(x2,y2);ctx.strokeStyle=g;ctx.lineWidth=4;ctx.lineCap='round';ctx.stroke();
+    });
+    balls.forEach(b=>{
+      b.x+=b.vx;b.y+=b.vy;b.rot+=b.rv;
+      if(b.x<-b.r*2)b.x=c.width+b.r*2;if(b.x>c.width+b.r*2)b.x=-b.r*2;
+      if(b.y<-b.r*2)b.y=c.height+b.r*2;if(b.y>c.height+b.r*2)b.y=-b.r*2;
+      db(b);
+    });
+    requestAnimationFrame(tick);
+  }
+  tick();
+})();
+
+/* ── COUNTER ── */
+function cnt(el,to,ms=1300){
+  if(!el)return;let v=0,s=to/(ms/16);
+  const t=setInterval(()=>{v+=s;if(v>=to){el.textContent=to;clearInterval(t);}else el.textContent=Math.floor(v);},16);
+}
+
+/* ── CHARTS ── */
+Chart.defaults.color='rgba(240,248,255,0.42)';
+Chart.defaults.font={family:'Rajdhani',size:12};
+const GR='rgba(255,255,255,0.05)',TK='rgba(240,248,255,0.36)';
+const NM=['Kim','Henry','Simon'],CO=['#ffd700','#00d4ff','#ff6b35'];
+
+// Points
+new Chart(document.getElementById('cPts'),{type:'bar',
+  data:{labels:NM,datasets:[{data:[45,21,21],backgroundColor:CO.map(c=>c+'44'),borderColor:CO,borderWidth:2,borderRadius:9,label:'Points'}]},
+  options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},
+    scales:{x:{grid:{color:GR},ticks:{color:TK}},y:{grid:{color:GR},ticks:{color:TK,stepSize:3},min:0,max:48}},
+    animation:{duration:1400,easing:'easeOutBounce'}}
+});
+
+// Win%
+new Chart(document.getElementById('cWpct'),{type:'bar',
+  data:{labels:NM,datasets:[{data:[68.2,41.2,36.8],backgroundColor:CO.map(c=>c+'44'),borderColor:CO,borderWidth:2,borderRadius:9,label:'Win %'}]},
+  options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},
+    scales:{x:{grid:{color:GR},ticks:{color:TK}},y:{grid:{color:GR},ticks:{color:TK,callback:v=>v+'%'},min:0,max:100}},
+    animation:{duration:1400}}
+});
+
+// Won vs Lost
+new Chart(document.getElementById('cWL'),{type:'bar',
+  data:{labels:NM,datasets:[
+    {label:'Won', data:[15,7,7],backgroundColor:CO.map(c=>c+'55'),borderColor:CO,borderWidth:2,borderRadius:6},
+    {label:'Lost',data:[7,10,12],backgroundColor:'rgba(255,77,77,0.2)',borderColor:'#ff4d4d',borderWidth:2,borderRadius:6}
+  ]},
+  options:{responsive:true,maintainAspectRatio:true,
+    plugins:{legend:{labels:{color:'rgba(240,248,255,0.52)',boxWidth:9,padding:9}}},
+    scales:{x:{grid:{color:GR},ticks:{color:TK}},y:{grid:{color:GR},ticks:{color:TK}}},
+    animation:{duration:1400}}
+});
+
+// Frames played
+new Chart(document.getElementById('cPlayed'),{type:'bar',
+  data:{labels:NM,datasets:[{data:[22,17,19],backgroundColor:CO.map(c=>c+'33'),borderColor:CO,borderWidth:2,borderRadius:8,label:'Frames'}]},
+  options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},
+    scales:{x:{grid:{color:GR},ticks:{color:TK}},y:{grid:{color:GR},ticks:{color:TK},min:0}},
+    animation:{duration:1400}}
+});
+
+// Points share doughnut
+new Chart(document.getElementById('cShare'),{type:'doughnut',
+  data:{labels:NM,datasets:[{data:[45,21,21],backgroundColor:CO.map(c=>c+'99'),borderColor:CO,borderWidth:2}]},
+  options:{responsive:true,maintainAspectRatio:true,cutout:'62%',
+    plugins:{legend:{position:'bottom',labels:{color:'rgba(240,248,255,0.52)',boxWidth:9,padding:10}}},
+    animation:{duration:1400,animateRotate:true}}
+});
+
+/* ── CONFETTI ── */
+function confetti(){
+  const w=document.getElementById('cf');
+  const cols=['#ffd700','#00d4ff','#ff6b35','#00ff88','#ff3b30','#a855f7'];
+  for(let i=0;i<65;i++){
+    const el=document.createElement('div');el.className='cfp';
+    const s=5+Math.random()*7;
+    el.style.cssText=`left:${Math.random()*100}%;width:${s}px;height:${s*(Math.random()>.5?1:2.3)}px;background:${cols[Math.floor(Math.random()*cols.length)]};animation-duration:${2+Math.random()*2}s;animation-delay:${Math.random()}s;`;
+    w.appendChild(el);el.addEventListener('animationend',()=>el.remove());
+  }
+}
+
+/* ── REVEAL ── */
+const ro=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.classList.add('in');
+      e.target.querySelectorAll('.wpct-fill[data-w],.pb-fill[data-w]').forEach(b=>{
+        setTimeout(()=>{b.style.width=b.getAttribute('data-w')+'%';},350);
+      });
+      ro.unobserve(e.target);
+    }
+  });
+},{threshold:.1});
+document.querySelectorAll('.rv').forEach(el=>ro.observe(el));
+
+/* ── STAT COUNTERS ── */
+const so=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      cnt(document.getElementById('ct1'),29);
+      cnt(document.getElementById('ct2'),45);
+      cnt(document.getElementById('ct3'),87); // 45+21+21
+      cnt(document.getElementById('ct4'),4);  // biggest margin: 8-4=4 or 7-3=4
+      so.disconnect();
+    }
+  });
+},{threshold:.3});
+const ss=document.getElementById('stats');
+if(ss)so.observe(ss);
+
+/* Animate hero counters + win% bars on load */
+setTimeout(()=>{
+  cnt(document.getElementById('hcF'),29,1100);
+  cnt(document.getElementById('hcP'),45,1300);
+  document.querySelectorAll('.wpct-fill[data-w],.pb-fill[data-w]').forEach(b=>{
+    b.style.width=b.getAttribute('data-w')+'%';
+  });
+},900);
+
+setTimeout(confetti,900);
+</script>
+</body>
+</html>
